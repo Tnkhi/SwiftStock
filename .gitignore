@@ -1,0 +1,30 @@
+# .NET Core
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+*.log
+
+# Visual Studio files
+.vs/
+*.vspscc
+*.vssscc
+.vscode/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# SQLite database file
+*.db
+
+# Logs
+Logs/
+*.log
+
+# Environment specific files
+appsettings.Development.json

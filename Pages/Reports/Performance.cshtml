@@ -1,0 +1,431 @@
+@page
+@model SwiftStock.Pages.Reports.PerformanceModel
+@{
+    ViewData["Title"] = "Rapports de Performance";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-trophy me-2"></i>Rapports de Performance</h2>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel me-1"></i>Excel
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="exportToPdf()">
+                        <i class="fas fa-file-pdf me-1"></i>PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtres -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtres</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="startDate" class="form-label">Date de début</label>
+                            <input type="date" class="form-control" id="startDate" value="@Model.StartDate.ToString("yyyy-MM-dd")">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="endDate" class="form-label">Date de fin</label>
+                            <input type="date" class="form-control" id="endDate" value="@Model.EndDate.ToString("yyyy-MM-dd")">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="reportType" class="form-label">Type de rapport</label>
+                            <select class="form-select" id="reportType">
+                                <option value="top-products">Meilleurs Produits</option>
+                                <option value="worst-products">Moins Bons Produits</option>
+                                <option value="categories">Performance Catégories</option>
+                                <option value="customers">Meilleurs Clients</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary" onclick="loadReport()">
+                                <i class="fas fa-search me-1"></i>Générer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Résumé -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title" id="totalProducts">0</h4>
+                                    <p class="card-text">Produits Analysés</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-boxes fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title" id="totalRevenue">0 €</h4>
+                                    <p class="card-text">Chiffre d'Affaires</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-euro-sign fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title" id="totalQuantity">0</h4>
+                                    <p class="card-text">Quantité Vendue</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-cubes fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title" id="averagePrice">0 €</h4>
+                                    <p class="card-text">Prix Moyen</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-calculator fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphiques -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Performance des Produits</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="performanceChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Répartition des Ventes</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="salesDistributionChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tableaux -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-table me-2"></i>Détails de Performance</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="performanceTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Produit</th>
+                                            <th>Quantité</th>
+                                            <th>CA</th>
+                                            <th>Prix Moyen</th>
+                                            <th>Ventes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let performanceChart, salesDistributionChart;
+
+        function loadReport() {
+            const reportType = document.getElementById('reportType').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (reportType === 'top-products') {
+                loadTopProducts(startDate, endDate);
+            } else if (reportType === 'worst-products') {
+                loadWorstProducts(startDate, endDate);
+            } else if (reportType === 'categories') {
+                loadCategoryPerformance(startDate, endDate);
+            } else if (reportType === 'customers') {
+                loadTopCustomers(startDate, endDate);
+            }
+        }
+
+        function loadTopProducts(startDate, endDate) {
+            fetch(`/api/reports/performance/top-products?startDate=${startDate}&endDate=${endDate}&topCount=10`)
+                .then(response => response.json())
+                .then(data => {
+                    updateSummary(data.topProducts);
+                    updatePerformanceChart(data.topProducts);
+                    updatePerformanceTable(data.topProducts);
+                })
+                .catch(error => console.error('Erreur:', error));
+        }
+
+        function loadWorstProducts(startDate, endDate) {
+            fetch(`/api/reports/performance/worst-products?startDate=${startDate}&endDate=${endDate}&topCount=10`)
+                .then(response => response.json())
+                .then(data => {
+                    updateSummary(data.worstProducts);
+                    updatePerformanceChart(data.worstProducts);
+                    updatePerformanceTable(data.worstProducts);
+                })
+                .catch(error => console.error('Erreur:', error));
+        }
+
+        function loadCategoryPerformance(startDate, endDate) {
+            // Charger les catégories et leur performance
+            fetch(`/api/reports/sales/by-category?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateCategorySummary(data.categorySales);
+                    updateCategoryChart(data.categorySales);
+                    updateCategoryTable(data.categorySales);
+                })
+                .catch(error => console.error('Erreur:', error));
+        }
+
+        function loadTopCustomers(startDate, endDate) {
+            fetch(`/api/reports/customers/top?startDate=${startDate}&endDate=${endDate}&topCount=10`)
+                .then(response => response.json())
+                .then(data => {
+                    updateCustomerSummary(data.topCustomers);
+                    updateCustomerChart(data.topCustomers);
+                    updateCustomerTable(data.topCustomers);
+                })
+                .catch(error => console.error('Erreur:', error));
+        }
+
+        function updateSummary(products) {
+            const totalProducts = products.length;
+            const totalRevenue = products.reduce((sum, p) => sum + p.totalRevenue, 0);
+            const totalQuantity = products.reduce((sum, p) => sum + p.totalQuantity, 0);
+            const averagePrice = totalQuantity > 0 ? totalRevenue / totalQuantity : 0;
+
+            document.getElementById('totalProducts').textContent = totalProducts;
+            document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(2) + ' €';
+            document.getElementById('totalQuantity').textContent = totalQuantity;
+            document.getElementById('averagePrice').textContent = averagePrice.toFixed(2) + ' €';
+        }
+
+        function updateCategorySummary(categories) {
+            const totalCategories = categories.length;
+            const totalRevenue = categories.reduce((sum, c) => sum + c.totalRevenue, 0);
+            const totalQuantity = categories.reduce((sum, c) => sum + c.totalQuantity, 0);
+            const averagePrice = totalQuantity > 0 ? totalRevenue / totalQuantity : 0;
+
+            document.getElementById('totalProducts').textContent = totalCategories;
+            document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(2) + ' €';
+            document.getElementById('totalQuantity').textContent = totalQuantity;
+            document.getElementById('averagePrice').textContent = averagePrice.toFixed(2) + ' €';
+        }
+
+        function updateCustomerSummary(customers) {
+            const totalCustomers = customers.length;
+            const totalRevenue = customers.reduce((sum, c) => sum + c.totalAmount, 0);
+            const totalPurchases = customers.reduce((sum, c) => sum + c.purchaseCount, 0);
+            const averagePurchase = totalPurchases > 0 ? totalRevenue / totalPurchases : 0;
+
+            document.getElementById('totalProducts').textContent = totalCustomers;
+            document.getElementById('totalRevenue').textContent = totalRevenue.toFixed(2) + ' €';
+            document.getElementById('totalQuantity').textContent = totalPurchases;
+            document.getElementById('averagePrice').textContent = averagePurchase.toFixed(2) + ' €';
+        }
+
+        function updatePerformanceChart(products) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+
+            performanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: products.map(p => p.productName),
+                    datasets: [{
+                        label: 'Chiffre d\'Affaires',
+                        data: products.map(p => p.totalRevenue),
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCategoryChart(categories) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+
+            performanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: categories.map(c => c.categoryName),
+                    datasets: [{
+                        label: 'Chiffre d\'Affaires',
+                        data: categories.map(c => c.totalRevenue),
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCustomerChart(customers) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+
+            performanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: customers.map(c => c.customerName),
+                    datasets: [{
+                        label: 'Chiffre d\'Affaires',
+                        data: customers.map(c => c.totalAmount),
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePerformanceTable(products) {
+            const tbody = document.querySelector('#performanceTable tbody');
+            tbody.innerHTML = '';
+
+            products.forEach(product => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = product.productName;
+                row.insertCell(1).textContent = product.totalQuantity;
+                row.insertCell(2).textContent = product.totalRevenue.toFixed(2) + ' €';
+                row.insertCell(3).textContent = product.averagePrice.toFixed(2) + ' €';
+                row.insertCell(4).textContent = product.saleCount;
+            });
+        }
+
+        function updateCategoryTable(categories) {
+            const tbody = document.querySelector('#performanceTable tbody');
+            tbody.innerHTML = '';
+
+            categories.forEach(category => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = category.categoryName;
+                row.insertCell(1).textContent = category.totalQuantity;
+                row.insertCell(2).textContent = category.totalRevenue.toFixed(2) + ' €';
+                row.insertCell(3).textContent = category.productCount;
+                row.insertCell(4).textContent = '-';
+            });
+        }
+
+        function updateCustomerTable(customers) {
+            const tbody = document.querySelector('#performanceTable tbody');
+            tbody.innerHTML = '';
+
+            customers.forEach(customer => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = customer.customerName;
+                row.insertCell(1).textContent = customer.purchaseCount;
+                row.insertCell(2).textContent = customer.totalAmount.toFixed(2) + ' €';
+                row.insertCell(3).textContent = customer.averagePurchase.toFixed(2) + ' €';
+                row.insertCell(4).textContent = '-';
+            });
+        }
+
+        function exportToExcel() {
+            const reportType = document.getElementById('reportType').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            window.open(`/api/reports/export/excel?reportType=performance&startDate=${startDate}&endDate=${endDate}`, '_blank');
+        }
+
+        function exportToPdf() {
+            const reportType = document.getElementById('reportType').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            window.open(`/api/reports/export/pdf?reportType=performance&startDate=${startDate}&endDate=${endDate}`, '_blank');
+        }
+
+        // Charger le rapport au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReport();
+        });
+    </script>
+}
+

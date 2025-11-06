@@ -1,0 +1,348 @@
+@page
+@using SwiftStock.Models
+@model SwiftStock.Pages.Products.DetailsModel
+@{
+    ViewData["Title"] = $"Détails - {Model.Product?.Name}";
+}
+
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-box text-primary me-2"></i>
+                        @Model.Product?.Name
+                    </h1>
+                    <p class="text-muted mb-0">Détails du produit et historique des mouvements</p>
+                </div>
+                <div>
+                    <a href="/Products/Edit/@Model.Product?.Id" class="btn btn-primary me-2">
+                        <i class="fas fa-edit me-2"></i>Modifier
+                    </a>
+                    <a href="/Products" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Retour
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Product != null)
+    {
+        <div class="row">
+            <!-- Informations principales -->
+            <div class="col-lg-8">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Informations du Produit</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="fw-bold">Nom :</td>
+                                        <td>@Model.Product.Name</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Référence :</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(Model.Product.SKU))
+                                            {
+                                                <code>@Model.Product.SKU</code>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Non définie</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Code-barres :</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(Model.Product.Barcode))
+                                            {
+                                                <code>@Model.Product.Barcode</code>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Non défini</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Catégorie :</td>
+                                        <td>
+                                            @if (Model.Product.Category != null)
+                                            {
+                                                <span class="badge bg-info">@Model.Product.Category.Name</span>
+                                            }
+                                            else if (!string.IsNullOrEmpty(Model.Product.CategoryName))
+                                            {
+                                                <span class="badge bg-info">@Model.Product.CategoryName</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Non définie</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Marque :</td>
+                                        <td>@(Model.Product.Brand ?? "Non définie")</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Unité :</td>
+                                        <td>@Model.Product.Unit</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="fw-bold">Prix d'achat :</td>
+                                        <td><span class="text-success fw-bold">@Model.Product.PurchasePrice.ToString("C")</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Prix de vente :</td>
+                                        <td><span class="text-primary fw-bold">@Model.Product.SalePrice.ToString("C")</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Marge :</td>
+                                        <td>
+                                            <span class="text-success fw-bold">@Model.Product.ProfitMargin.ToString("C")</span>
+                                            <small class="text-muted">
+                                                (@((Model.Product.ProfitMargin / Model.Product.PurchasePrice * 100).ToString("F1"))%)
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">TVA :</td>
+                                        <td>@(Model.Product.TaxRate?.ToString("F1") ?? "0")%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Statut :</td>
+                                        <td>
+                                            @if (Model.Product.IsActive)
+                                            {
+                                                <span class="badge bg-success">Actif</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Inactif</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Créé le :</td>
+                                        <td>@Model.Product.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.Product.Description))
+                        {
+                            <hr>
+                            <h6>Description :</h6>
+                            <p class="text-muted">@Model.Product.Description</p>
+                        }
+                    </div>
+                </div>
+
+                <!-- Historique des mouvements de stock -->
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-history me-2"></i>Historique des Mouvements
+                        </h6>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (Model.StockMovements.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Type</th>
+                                            <th>Quantité</th>
+                                            <th>Prix unitaire</th>
+                                            <th>Référence</th>
+                                            <th>Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var movement in Model.StockMovements.OrderByDescending(m => m.CreatedAt))
+                                        {
+                                            <tr>
+                                                <td>@movement.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                                <td>
+                                                    @switch (movement.Type)
+                                                    {
+                                                        case MovementType.Purchase:
+                                                            <span class="badge bg-success">Achat</span>
+                                                            break;
+                                                        case MovementType.Sale:
+                                                            <span class="badge bg-primary">Vente</span>
+                                                            break;
+                                                        case MovementType.Adjustment:
+                                                            <span class="badge bg-warning">Ajustement</span>
+                                                            break;
+                                                        case MovementType.Return:
+                                                            <span class="badge bg-info">Retour</span>
+                                                            break;
+                                                        case MovementType.Transfer:
+                                                            <span class="badge bg-secondary">Transfert</span>
+                                                            break;
+                                                        case MovementType.Loss:
+                                                            <span class="badge bg-danger">Perte</span>
+                                                            break;
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (movement.Quantity > 0)
+                                                    {
+                                                        <span class="text-success">+@movement.Quantity</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-danger">@movement.Quantity</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (movement.UnitPrice.HasValue)
+                                                    {
+                                                        @movement.UnitPrice.Value.ToString("C")
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (!string.IsNullOrEmpty(movement.Reference))
+                                                    {
+                                                        <code>@movement.Reference</code>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                                <td>@(movement.Notes ?? "-")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted p-4">
+                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                <p>Aucun mouvement de stock enregistré</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panneau latéral -->
+            <div class="col-lg-4">
+                <!-- Statut du stock -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-warehouse me-2"></i>État du Stock
+                        </h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            @if (Model.Product.CurrentStock <= 0)
+                            {
+                                <i class="fas fa-exclamation-circle fa-4x text-danger mb-3"></i>
+                                <h4 class="text-danger">Rupture de stock</h4>
+                                <p class="text-muted">Stock actuel : <strong>0</strong></p>
+                            }
+                            else if (Model.Product.IsLowStock)
+                            {
+                                <i class="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
+                                <h4 class="text-warning">Stock bas</h4>
+                                <p class="text-muted">Stock actuel : <strong>@Model.Product.CurrentStock</strong></p>
+                            }
+                            else
+                            {
+                                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                                <h4 class="text-success">Stock normal</h4>
+                                <p class="text-muted">Stock actuel : <strong>@Model.Product.CurrentStock</strong></p>
+                            }
+                        </div>
+
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border-end">
+                                    <h6 class="text-muted">Minimum</h6>
+                                    <h5>@Model.Product.MinStockLevel</h5>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <h6 class="text-muted">Maximum</h6>
+                                <h5>@Model.Product.MaxStockLevel</h5>
+                            </div>
+                        </div>
+
+                        @if (Model.Product.IsLowStock || Model.Product.CurrentStock <= 0)
+                        {
+                            <hr>
+                            <a href="/Products/Edit/@Model.Product.Id" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit me-2"></i>Mettre à jour le stock
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                <!-- Actions rapides -->
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">
+                            <i class="fas fa-bolt me-2"></i>Actions Rapides
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/POS?productId=@Model.Product.Id" class="btn btn-success">
+                                <i class="fas fa-cash-register me-2"></i>Vendre ce produit
+                            </a>
+                            <a href="/Products/Edit/@Model.Product.Id" class="btn btn-primary">
+                                <i class="fas fa-edit me-2"></i>Modifier
+                            </a>
+                            <button type="button" class="btn btn-warning" onclick="adjustStock(@Model.Product.Id)">
+                                <i class="fas fa-adjust me-2"></i>Ajuster le stock
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            <h4>Produit non trouvé</h4>
+            <p>Le produit demandé n'existe pas ou a été supprimé.</p>
+            <a href="/Products" class="btn btn-primary">Retour à la liste</a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function adjustStock(productId) {
+            // TODO: Implémenter la modal d'ajustement de stock
+            alert('Fonctionnalité d\'ajustement de stock à implémenter');
+        }
+    </script>
+}

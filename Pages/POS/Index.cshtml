@@ -1,0 +1,465 @@
+@page
+@model SwiftStock.Pages.POS.IndexModel
+@{
+    ViewData["Title"] = "Point de Vente - SwiftStock";
+}
+
+<div class="container-fluid h-100">
+    <div class="row h-100">
+        <!-- Panneau de recherche et produits -->
+        <div class="col-lg-8">
+            <!-- Barre de recherche -->
+            <div class="card shadow mb-3">
+                <div class="card-body p-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" id="productSearch" class="form-control form-control-lg" 
+                                       placeholder="Rechercher par nom, SKU ou scanner un code-barres..." 
+                                       autocomplete="off" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-primary btn-lg" onclick="openBarcodeScanner()">
+                                    <i class="fas fa-barcode me-2"></i>Scanner
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des produits -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-boxes me-2"></i>Produits Disponibles
+                        <span class="badge bg-primary ms-2" id="productCount">@Model.Products.Count()</span>
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="row g-2 p-3" id="productsGrid">
+                        @foreach (var product in Model.Products)
+                        {
+                            <div class="col-lg-3 col-md-4 col-sm-6" data-product-id="@product.Id" 
+                                 data-product-name="@product.Name.ToLower()" 
+                                 data-product-sku="@product.SKU?.ToLower()" 
+                                 data-product-barcode="@product.Barcode?.ToLower()"
+                                 data-product-stock="@product.CurrentStock">
+                                <div class="card product-card h-100 border-0 shadow-sm" 
+                                     onclick="addToCart(@product.Id, '@product.Name', @product.SalePrice, @product.CurrentStock)">
+                                    <div class="card-body text-center p-3">
+                                        <div class="mb-2">
+                                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                                 style="width: 60px; height: 60px;">
+                                                <i class="fas fa-box fa-2x text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <h6 class="card-title mb-1 text-truncate" title="@product.Name">@product.Name</h6>
+                                        <p class="card-text text-muted small mb-1">@product.SKU</p>
+                                        <p class="card-text text-primary fw-bold mb-1">@product.SalePrice.ToString("C")</p>
+                                        <div class="mb-2">
+                                            @if (product.CurrentStock <= 0)
+                                            {
+                                                <span class="badge bg-danger">Rupture</span>
+                                            }
+                                            else if (product.IsLowStock)
+                                            {
+                                                <span class="badge bg-warning">Stock: @product.CurrentStock</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Stock: @product.CurrentStock</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panneau de vente -->
+        <div class="col-lg-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-shopping-cart me-2"></i>Panier de Vente
+                    </h6>
+                </div>
+                <div class="card-body p-0 d-flex flex-column">
+                    <!-- Liste des articles dans le panier -->
+                    <div class="flex-grow-1 p-3" style="max-height: 400px; overflow-y: auto;">
+                        <div id="cartItems">
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                                <p>Aucun article dans le panier</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Résumé de la vente -->
+                    <div class="border-top p-3">
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <strong>Sous-total:</strong>
+                            </div>
+                            <div class="col-6 text-end">
+                                <span id="subtotal">0 FCFA</span>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-6">
+                                <strong>TVA:</strong>
+                            </div>
+                            <div class="col-6 text-end">
+                                <span id="taxAmount">0 FCFA</span>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Total:</strong>
+                            </div>
+                            <div class="col-6 text-end">
+                                <span id="totalAmount" class="h5 text-primary">0 FCFA</span>
+                            </div>
+                        </div>
+
+                        <!-- Informations client -->
+                        <div class="mb-3">
+                            <label for="customerName" class="form-label">Nom du client (optionnel)</label>
+                            <input type="text" id="customerName" class="form-control" placeholder="Nom du client" />
+                        </div>
+
+                        <!-- Modes de paiement -->
+                        <div class="mb-3">
+                            <label class="form-label">Mode de paiement</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="paymentMethod" id="cash" value="Cash" checked>
+                                <label class="btn btn-outline-success" for="cash">
+                                    <i class="fas fa-money-bill me-1"></i>Espèces
+                                </label>
+
+                                <input type="radio" class="btn-check" name="paymentMethod" id="card" value="Card">
+                                <label class="btn btn-outline-primary" for="card">
+                                    <i class="fas fa-credit-card me-1"></i>Carte
+                                </label>
+
+                                <input type="radio" class="btn-check" name="paymentMethod" id="mobile" value="MobileMoney">
+                                <label class="btn btn-outline-info" for="mobile">
+                                    <i class="fas fa-mobile-alt me-1"></i>Mobile Money
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Montant reçu -->
+                        <div class="mb-3" id="cashPaymentSection">
+                            <label for="amountReceived" class="form-label">Montant reçu</label>
+                            <input type="number" id="amountReceived" class="form-control" step="0.01" min="0" />
+                            <div class="text-end mt-1">
+                                <small class="text-muted">Monnaie: <span id="changeAmount">0 FCFA</span></small>
+                            </div>
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-success btn-lg" onclick="processSale()" id="processSaleBtn" disabled>
+                                <i class="fas fa-check me-2"></i>Finaliser la Vente
+                            </button>
+                            <button type="button" class="btn btn-warning" onclick="clearCart()">
+                                <i class="fas fa-trash me-2"></i>Vider le Panier
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de vente -->
+<div class="modal fade" id="saleConfirmationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle text-success me-2"></i>Vente Confirmée
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <i class="fas fa-receipt fa-4x text-success mb-3"></i>
+                    <h4>Vente #<span id="saleNumber"></span></h4>
+                    <p class="text-muted">Montant total: <strong id="saleTotal"></strong></p>
+                    <p class="text-muted">Mode de paiement: <strong id="salePaymentMethod"></strong></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="printReceipt()">
+                    <i class="fas fa-print me-2"></i>Imprimer le Reçu
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="clearCart()">
+                    Nouvelle Vente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let cart = [];
+        let products = @Html.Raw(Json.Serialize(Model.Products.Select(p => new { p.Id, p.Name, p.SalePrice, p.CurrentStock, p.TaxRate })));
+
+        $(document).ready(function() {
+            // Recherche de produits
+            $('#productSearch').on('input', function() {
+                filterProducts($(this).val().toLowerCase());
+            });
+
+            // Calcul de la monnaie pour les paiements en espèces
+            $('#amountReceived').on('input', function() {
+                calculateChange();
+            });
+
+            // Changement de mode de paiement
+            $('input[name="paymentMethod"]').on('change', function() {
+                togglePaymentSection();
+            });
+
+            // Raccourcis clavier
+            $(document).on('keydown', function(e) {
+                if (e.key === 'Enter' && $('#productSearch').is(':focus')) {
+                    e.preventDefault();
+                    searchAndAddProduct();
+                }
+            });
+        });
+
+        function filterProducts(searchTerm) {
+            $('.col-lg-3.col-md-4.col-sm-6').each(function() {
+                const $card = $(this);
+                const productName = $card.data('product-name') || '';
+                const productSku = $card.data('product-sku') || '';
+                const productBarcode = $card.data('product-barcode') || '';
+
+                if (productName.includes(searchTerm) || 
+                    productSku.includes(searchTerm) || 
+                    productBarcode.includes(searchTerm)) {
+                    $card.show();
+                } else {
+                    $card.hide();
+                }
+            });
+
+            // Mettre à jour le compteur
+            const visibleCount = $('.col-lg-3.col-md-4.col-sm-6:visible').length;
+            $('#productCount').text(visibleCount);
+        }
+
+        function addToCart(productId, productName, price, stock) {
+            if (stock <= 0) {
+                alert('Ce produit est en rupture de stock !');
+                return;
+            }
+
+            const existingItem = cart.find(item => item.productId === productId);
+            
+            if (existingItem) {
+                if (existingItem.quantity >= stock) {
+                    alert('Stock insuffisant !');
+                    return;
+                }
+                existingItem.quantity++;
+            } else {
+                cart.push({
+                    productId: productId,
+                    name: productName,
+                    price: price,
+                    quantity: 1,
+                    stock: stock
+                });
+            }
+
+            updateCartDisplay();
+        }
+
+        function updateCartDisplay() {
+            const cartItemsHtml = cart.map(item => `
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">${item.name}</div>
+                        <small class="text-muted">${item.price.toLocaleString()} FCFA</small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${item.productId}, -1)">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <span class="mx-2 fw-bold">${item.quantity}</span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${item.productId}, 1)">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeFromCart(${item.productId})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            $('#cartItems').html(cartItemsHtml || `
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                    <p>Aucun article dans le panier</p>
+                </div>
+            `);
+
+            calculateTotals();
+        }
+
+        function updateQuantity(productId, change) {
+            const item = cart.find(item => item.productId === productId);
+            if (item) {
+                const newQuantity = item.quantity + change;
+                if (newQuantity <= 0) {
+                    removeFromCart(productId);
+                } else if (newQuantity <= item.stock) {
+                    item.quantity = newQuantity;
+                    updateCartDisplay();
+                } else {
+                    alert('Stock insuffisant !');
+                }
+            }
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.productId !== productId);
+            updateCartDisplay();
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCartDisplay();
+            $('#customerName').val('');
+            $('#amountReceived').val('');
+            $('#processSaleBtn').prop('disabled', true);
+        }
+
+        function calculateTotals() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const taxRate = 0.18; // 18% de TVA par défaut
+            const taxAmount = subtotal * taxRate;
+            const total = subtotal + taxAmount;
+
+            $('#subtotal').text(subtotal.toLocaleString() + ' FCFA');
+            $('#taxAmount').text(taxAmount.toLocaleString() + ' FCFA');
+            $('#totalAmount').text(total.toLocaleString() + ' FCFA');
+
+            $('#processSaleBtn').prop('disabled', cart.length === 0);
+            calculateChange();
+        }
+
+        function calculateChange() {
+            const total = parseFloat($('#totalAmount').text().replace(/[^\d]/g, '')) || 0;
+            const received = parseFloat($('#amountReceived').val()) || 0;
+            const change = received - total;
+            
+            $('#changeAmount').text(change.toLocaleString() + ' FCFA');
+            
+            if (change < 0) {
+                $('#changeAmount').removeClass('text-success').addClass('text-danger');
+            } else {
+                $('#changeAmount').removeClass('text-danger').addClass('text-success');
+            }
+        }
+
+        function togglePaymentSection() {
+            const paymentMethod = $('input[name="paymentMethod"]:checked').val();
+            if (paymentMethod === 'Cash') {
+                $('#cashPaymentSection').show();
+            } else {
+                $('#cashPaymentSection').hide();
+            }
+        }
+
+        function processSale() {
+            if (cart.length === 0) {
+                alert('Le panier est vide !');
+                return;
+            }
+
+            const paymentMethod = $('input[name="paymentMethod"]:checked').val();
+            const total = parseFloat($('#totalAmount').text().replace(/[^\d]/g, '')) || 0;
+
+            if (paymentMethod === 'Cash') {
+                const received = parseFloat($('#amountReceived').val()) || 0;
+                if (received < total) {
+                    alert('Le montant reçu est insuffisant !');
+                    return;
+                }
+            }
+
+            // Envoyer la vente au serveur
+            const saleData = {
+                items: cart,
+                customerName: $('#customerName').val(),
+                paymentMethod: paymentMethod,
+                totalAmount: total
+            };
+
+            $.ajax({
+                url: '/POS/ProcessSale',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(saleData),
+                success: function(response) {
+                    $('#saleNumber').text(response.saleNumber);
+                    $('#saleTotal').text(total.toLocaleString() + ' FCFA');
+                    $('#salePaymentMethod').text(getPaymentMethodText(paymentMethod));
+                    $('#saleConfirmationModal').modal('show');
+                },
+                error: function() {
+                    alert('Erreur lors de la finalisation de la vente !');
+                }
+            });
+        }
+
+        function getPaymentMethodText(method) {
+            switch(method) {
+                case 'Cash': return 'Espèces';
+                case 'Card': return 'Carte bancaire';
+                case 'MobileMoney': return 'Mobile Money';
+                default: return method;
+            }
+        }
+
+        function openBarcodeScanner() {
+            // TODO: Implémenter le scanner de code-barres
+            alert('Scanner de code-barres à implémenter');
+        }
+
+        function printReceipt() {
+            // TODO: Implémenter l'impression du reçu
+            alert('Impression du reçu à implémenter');
+        }
+
+        function searchAndAddProduct() {
+            const searchTerm = $('#productSearch').val().toLowerCase();
+            const product = products.find(p => 
+                p.name.toLowerCase().includes(searchTerm) || 
+                p.sku?.toLowerCase().includes(searchTerm)
+            );
+            
+            if (product) {
+                addToCart(product.id, product.name, product.salePrice, product.currentStock);
+                $('#productSearch').val('');
+            }
+        }
+    </script>
+}

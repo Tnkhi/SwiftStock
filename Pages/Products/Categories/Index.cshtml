@@ -1,0 +1,199 @@
+@page
+@model SwiftStock.Pages.Products.Categories.IndexModel
+@{
+    ViewData["Title"] = "Gestion des Catégories";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-tags"></i> Gestion des Catégories</h2>
+                <a asp-page="Create" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nouvelle Catégorie
+                </a>
+            </div>
+
+            <!-- Filtres -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="searchTerm" class="form-label">Rechercher</label>
+                            <input type="text" class="form-control" id="searchTerm" name="searchTerm" 
+                                   value="@Model.SearchTerm" placeholder="Nom de la catégorie...">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="parentCategoryId" class="form-label">Catégorie parente</label>
+                            <select class="form-select" id="parentCategoryId" name="parentCategoryId">
+                                <option value="">Toutes les catégories</option>
+                                <option value="0" selected="@(Model.ParentCategoryId == 0)">Catégories principales</option>
+                                @foreach (var category in Model.ParentCategories)
+                                {
+                                    <option value="@category.Id" selected="@(Model.ParentCategoryId == category.Id)">
+                                        @category.Name
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-search"></i> Filtrer
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Liste des catégories -->
+            <div class="card">
+                <div class="card-body">
+                    @if (Model.Categories.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Code</th>
+                                        <th>Catégorie parente</th>
+                                        <th>Sous-catégories</th>
+                                        <th>Produits</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var category in Model.Categories)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(category.ImageUrl))
+                                                    {
+                                                        <img src="@category.ImageUrl" alt="@category.Name" class="me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                            <i class="fas fa-tag"></i>
+                                                        </div>
+                                                    }
+                                                    <div>
+                                                        <strong>@category.Name</strong>
+                                                        @if (!string.IsNullOrEmpty(category.Description))
+                                                        {
+                                                            <br><small class="text-muted">@category.Description</small>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(category.Code))
+                                                {
+                                                    <span class="badge bg-info">@category.Code</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (category.ParentCategory != null)
+                                                {
+                                                    <span class="badge bg-secondary">@category.ParentCategory.Name</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-primary">Catégorie principale</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-warning">@category.SubCategories.Count</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">@category.Products.Count</span>
+                                            </td>
+                                            <td>
+                                                @if (category.IsActive)
+                                                {
+                                                    <span class="badge bg-success">Actif</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger">Inactif</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a asp-page="Details" asp-route-id="@category.Id" class="btn btn-sm btn-outline-info" title="Voir détails">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a asp-page="Edit" asp-route-id="@category.Id" class="btn btn-sm btn-outline-warning" title="Modifier">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    @if (category.ParentCategoryId == null)
+                                                    {
+                                                        <a asp-page="Create" asp-route-parentId="@category.Id" class="btn btn-sm btn-outline-primary" title="Ajouter sous-catégorie">
+                                                            <i class="fas fa-plus"></i>
+                                                        </a>
+                                                    }
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="toggleCategoryStatus(@category.Id, @category.IsActive.ToString().ToLower())" title="@(category.IsActive ? "Désactiver" : "Activer")">
+                                                        <i class="fas fa-@(category.IsActive ? "times" : "check")"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucune catégorie trouvée</h5>
+                            <p class="text-muted">Aucune catégorie ne correspond aux critères de recherche.</p>
+                            <a asp-page="Create" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Créer la première catégorie
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleCategoryStatus(categoryId, isActive) {
+            const action = isActive ? 'désactiver' : 'activer';
+            if (confirm(`Êtes-vous sûr de vouloir ${action} cette catégorie ?`)) {
+                fetch(`/api/products/categories/${categoryId}/toggle-status?isActive=${!isActive}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Erreur lors de la modification du statut');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erreur lors de la modification du statut');
+                });
+            }
+        }
+    </script>
+}
+

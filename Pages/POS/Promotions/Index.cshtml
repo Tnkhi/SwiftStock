@@ -1,0 +1,251 @@
+@page
+@model SwiftStock.Pages.POS.Promotions.IndexModel
+@using SwiftStock.Models
+@{
+    ViewData["Title"] = "Gestion des Promotions";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-percentage"></i> Gestion des Promotions</h2>
+                <a asp-page="Create" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nouvelle Promotion
+                </a>
+            </div>
+
+            <!-- Filtres -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="searchTerm" class="form-label">Rechercher</label>
+                            <input type="text" class="form-control" id="searchTerm" name="searchTerm" 
+                                   value="@Model.SearchTerm" placeholder="Nom de la promotion...">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="statusFilter" class="form-label">Statut</label>
+                            <select class="form-select" id="statusFilter" name="statusFilter">
+                                <option value="">Tous les statuts</option>
+                                <option value="Draft" selected="@(Model.StatusFilter == "Draft")">Brouillon</option>
+                                <option value="Active" selected="@(Model.StatusFilter == "Active")">Actif</option>
+                                <option value="Paused" selected="@(Model.StatusFilter == "Paused")">En pause</option>
+                                <option value="Expired" selected="@(Model.StatusFilter == "Expired")">Expiré</option>
+                                <option value="Cancelled" selected="@(Model.StatusFilter == "Cancelled")">Annulé</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="typeFilter" class="form-label">Type</label>
+                            <select class="form-select" id="typeFilter" name="typeFilter">
+                                <option value="">Tous les types</option>
+                                <option value="Percentage" selected="@(Model.TypeFilter == "Percentage")">Pourcentage</option>
+                                <option value="FixedAmount" selected="@(Model.TypeFilter == "FixedAmount")">Montant fixe</option>
+                                <option value="BuyXGetY" selected="@(Model.TypeFilter == "BuyXGetY")">Acheter X, obtenir Y</option>
+                                <option value="FreeShipping" selected="@(Model.TypeFilter == "FreeShipping")">Livraison gratuite</option>
+                                <option value="Bundle" selected="@(Model.TypeFilter == "Bundle")">Offre groupée</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-search"></i> Filtrer
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Liste des promotions -->
+            <div class="card">
+                <div class="card-body">
+                    @if (Model.Promotions.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Type</th>
+                                        <th>Réduction</th>
+                                        <th>Période</th>
+                                        <th>Statut</th>
+                                        <th>Utilisation</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var promotion in Model.Promotions)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <strong>@promotion.Name</strong>
+                                                    @if (!string.IsNullOrEmpty(promotion.PromoCode))
+                                                    {
+                                                        <br><small class="text-muted">Code: @promotion.PromoCode</small>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(promotion.Description))
+                                                    {
+                                                        <br><small class="text-muted">@promotion.Description</small>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-@(promotion.Type switch {
+                                                    PromotionType.Percentage => "primary",
+                                                    PromotionType.FixedAmount => "success",
+                                                    PromotionType.BuyXGetY => "warning",
+                                                    PromotionType.FreeShipping => "info",
+                                                    PromotionType.Bundle => "secondary",
+                                                    _ => "light"
+                                                })">
+                                                    @promotion.Type
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @switch (promotion.Type)
+                                                {
+                                                    case PromotionType.Percentage:
+                                                        <span>@promotion.DiscountPercentage%</span>
+                                                        break;
+                                                    case PromotionType.FixedAmount:
+                                                        <span>@promotion.DiscountAmount?.ToString("N0") F</span>
+                                                        break;
+                                                    case PromotionType.BuyXGetY:
+                                                        <span>Acheter @promotion.BuyQuantity, obtenir @promotion.GetQuantity</span>
+                                                        break;
+                                                    case PromotionType.FreeShipping:
+                                                        <span>Livraison gratuite</span>
+                                                        break;
+                                                    case PromotionType.Bundle:
+                                                        <span>Offre groupée</span>
+                                                        break;
+                                                }
+                                                @if (promotion.MaximumDiscountAmount.HasValue)
+                                                {
+                                                    <br><small class="text-muted">Max: @promotion.MaximumDiscountAmount.Value.ToString("N0") F</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div>
+                                                    <small>Du: @promotion.StartDate.ToString("dd/MM/yyyy")</small><br>
+                                                    <small>Au: @promotion.EndDate.ToString("dd/MM/yyyy")</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-@(promotion.Status switch {
+                                                    PromotionStatus.Draft => "secondary",
+                                                    PromotionStatus.Active => "success",
+                                                    PromotionStatus.Paused => "warning",
+                                                    PromotionStatus.Expired => "danger",
+                                                    PromotionStatus.Cancelled => "dark",
+                                                    _ => "light"
+                                                })">
+                                                    @promotion.Status
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@promotion.PromotionUsages.Count utilisations</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a asp-page="Details" asp-route-id="@promotion.Id" class="btn btn-sm btn-outline-info" title="Voir détails">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a asp-page="Edit" asp-route-id="@promotion.Id" class="btn btn-sm btn-outline-warning" title="Modifier">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    @if (promotion.Status == PromotionStatus.Active)
+                                                    {
+                                                        <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                                onclick="togglePromotionStatus(@promotion.Id, 'Paused')" title="Mettre en pause">
+                                                            <i class="fas fa-pause"></i>
+                                                        </button>
+                                                    }
+                                                    else if (promotion.Status == PromotionStatus.Paused)
+                                                    {
+                                                        <button type="button" class="btn btn-sm btn-outline-success" 
+                                                                onclick="togglePromotionStatus(@promotion.Id, 'Active')" title="Activer">
+                                                            <i class="fas fa-play"></i>
+                                                        </button>
+                                                    }
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                            onclick="deletePromotion(@promotion.Id)" title="Supprimer">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-percentage fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucune promotion trouvée</h5>
+                            <p class="text-muted">Aucune promotion ne correspond aux critères de recherche.</p>
+                            <a asp-page="Create" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Créer la première promotion
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function togglePromotionStatus(promotionId, newStatus) {
+            const action = newStatus === 'Active' ? 'activer' : 'mettre en pause';
+            if (confirm(`Êtes-vous sûr de vouloir ${action} cette promotion ?`)) {
+                fetch(`/api/pos/promotions/${promotionId}/toggle-status?status=${newStatus}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Erreur lors de la modification du statut');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erreur lors de la modification du statut');
+                });
+            }
+        }
+
+        function deletePromotion(promotionId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cette promotion ? Cette action est irréversible.')) {
+                fetch(`/api/pos/promotions/${promotionId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Erreur lors de la suppression de la promotion');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erreur lors de la suppression de la promotion');
+                });
+            }
+        }
+    </script>
+}

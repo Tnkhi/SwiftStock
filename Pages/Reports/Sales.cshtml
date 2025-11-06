@@ -1,0 +1,338 @@
+@page
+@model SwiftStock.Pages.Reports.SalesModel
+@{
+    ViewData["Title"] = "Rapports de Ventes";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-chart-line me-2"></i>Rapports de Ventes</h2>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel me-1"></i>Excel
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="exportToPdf()">
+                        <i class="fas fa-file-pdf me-1"></i>PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filtres -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filtres</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="startDate" class="form-label">Date de début</label>
+                            <input type="date" class="form-control" id="startDate" value="@Model.StartDate.ToString("yyyy-MM-dd")">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="endDate" class="form-label">Date de fin</label>
+                            <input type="date" class="form-control" id="endDate" value="@Model.EndDate.ToString("yyyy-MM-dd")">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="groupBy" class="form-label">Grouper par</label>
+                            <select class="form-select" id="groupBy">
+                                <option value="">Aucun</option>
+                                <option value="day">Jour</option>
+                                <option value="week">Semaine</option>
+                                <option value="month">Mois</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary" onclick="loadReport()">
+                                <i class="fas fa-search me-1"></i>Générer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Résumé -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title" id="totalSales">0</h4>
+                                    <p class="card-text">Total Ventes</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-shopping-cart fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title" id="totalRevenue">0 €</h4>
+                                    <p class="card-text">Chiffre d'Affaires</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-euro-sign fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title" id="averageSale">0 €</h4>
+                                    <p class="card-text">Panier Moyen</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-calculator fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="card-title" id="totalProducts">0</h4>
+                                    <p class="card-text">Produits Vendus</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-boxes fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphiques -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-area me-2"></i>Évolution des Ventes</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="salesChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Méthodes de Paiement</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="paymentMethodChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tableaux -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-table me-2"></i>Ventes par Produit</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="productSalesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Produit</th>
+                                            <th>Quantité</th>
+                                            <th>CA</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-table me-2"></i>Ventes par Catégorie</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="categorySalesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Catégorie</th>
+                                            <th>Quantité</th>
+                                            <th>CA</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let salesChart, paymentMethodChart;
+
+        function loadReport() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const groupBy = document.getElementById('groupBy').value;
+
+            // Charger le rapport principal
+            fetch(`/api/reports/sales?startDate=${startDate}&endDate=${endDate}&groupBy=${groupBy}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateSummary(data.summary);
+                    updateSalesChart(data.salesByDay);
+                    updatePaymentMethodChart(data.salesByPaymentMethod);
+                })
+                .catch(error => console.error('Erreur:', error));
+
+            // Charger les ventes par produit
+            fetch(`/api/reports/sales/by-product?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateProductSalesTable(data.productSales);
+                })
+                .catch(error => console.error('Erreur:', error));
+
+            // Charger les ventes par catégorie
+            fetch(`/api/reports/sales/by-category?startDate=${startDate}&endDate=${endDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateCategorySalesTable(data.categorySales);
+                })
+                .catch(error => console.error('Erreur:', error));
+        }
+
+        function updateSummary(summary) {
+            document.getElementById('totalSales').textContent = summary.totalSales;
+            document.getElementById('totalRevenue').textContent = summary.totalRevenue.toFixed(2) + ' €';
+            document.getElementById('averageSale').textContent = summary.averageSale.toFixed(2) + ' €';
+        }
+
+        function updateSalesChart(salesByDay) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            
+            if (salesChart) {
+                salesChart.destroy();
+            }
+
+            salesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: salesByDay.map(s => new Date(s.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Ventes',
+                        data: salesByDay.map(s => s.revenue),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePaymentMethodChart(salesByPaymentMethod) {
+            const ctx = document.getElementById('paymentMethodChart').getContext('2d');
+            
+            if (paymentMethodChart) {
+                paymentMethodChart.destroy();
+            }
+
+            paymentMethodChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: salesByPaymentMethod.map(s => s.paymentMethod),
+                    datasets: [{
+                        data: salesByPaymentMethod.map(s => s.revenue),
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function updateProductSalesTable(productSales) {
+            const tbody = document.querySelector('#productSalesTable tbody');
+            tbody.innerHTML = '';
+
+            productSales.slice(0, 10).forEach(product => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = product.productName;
+                row.insertCell(1).textContent = product.totalQuantity;
+                row.insertCell(2).textContent = product.totalRevenue.toFixed(2) + ' €';
+            });
+        }
+
+        function updateCategorySalesTable(categorySales) {
+            const tbody = document.querySelector('#categorySalesTable tbody');
+            tbody.innerHTML = '';
+
+            categorySales.forEach(category => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = category.categoryName;
+                row.insertCell(1).textContent = category.totalQuantity;
+                row.insertCell(2).textContent = category.totalRevenue.toFixed(2) + ' €';
+            });
+        }
+
+        function exportToExcel() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            window.open(`/api/reports/export/excel?reportType=sales&startDate=${startDate}&endDate=${endDate}`, '_blank');
+        }
+
+        function exportToPdf() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            window.open(`/api/reports/export/pdf?reportType=sales&startDate=${startDate}&endDate=${endDate}`, '_blank');
+        }
+
+        // Charger le rapport au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReport();
+        });
+    </script>
+}
+

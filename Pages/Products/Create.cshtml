@@ -1,0 +1,212 @@
+@page
+@model SwiftStock.Pages.Products.CreateModel
+@{
+    ViewData["Title"] = "Nouveau Produit - SwiftStock";
+}
+
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-plus text-primary me-2"></i>
+                        Nouveau Produit
+                    </h1>
+                    <p class="text-muted mb-0">Ajouter un nouveau produit à votre inventaire</p>
+                </div>
+                <div>
+                    <a href="/Products" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informations du Produit</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label asp-for="Product.Name" class="form-label">Nom du produit *</label>
+                                <input asp-for="Product.Name" class="form-control" placeholder="Ex: Coca-Cola 33cl" />
+                                <span asp-validation-for="Product.Name" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Product.SKU" class="form-label">Référence (SKU)</label>
+                                <input asp-for="Product.SKU" class="form-control" placeholder="Ex: COCA-33CL" />
+                                <span asp-validation-for="Product.SKU" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Product.Category" class="form-label">Catégorie</label>
+                                <input asp-for="Product.Category" class="form-control" placeholder="Ex: Boissons" list="categories" />
+                                <datalist id="categories">
+                                    <option value="Boissons" />
+                                    <option value="Alimentaire" />
+                                    <option value="Hygiène" />
+                                    <option value="Électronique" />
+                                    <option value="Vêtements" />
+                                </datalist>
+                                <span asp-validation-for="Product.Category" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Product.Brand" class="form-label">Marque</label>
+                                <input asp-for="Product.Brand" class="form-control" placeholder="Ex: Coca-Cola" />
+                                <span asp-validation-for="Product.Brand" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Product.Barcode" class="form-label">Code-barres</label>
+                                <input asp-for="Product.Barcode" class="form-control" placeholder="Ex: 1234567890123" />
+                                <span asp-validation-for="Product.Barcode" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Product.Unit" class="form-label">Unité</label>
+                                <select asp-for="Product.Unit" class="form-select">
+                                    <option value="pcs">Pièces</option>
+                                    <option value="kg">Kilogrammes</option>
+                                    <option value="L">Litres</option>
+                                    <option value="m">Mètres</option>
+                                    <option value="m²">Mètres carrés</option>
+                                    <option value="m³">Mètres cubes</option>
+                                </select>
+                                <span asp-validation-for="Product.Unit" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Product.Description" class="form-label">Description</label>
+                            <textarea asp-for="Product.Description" class="form-control" rows="3" placeholder="Description détaillée du produit..."></textarea>
+                            <span asp-validation-for="Product.Description" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h6 class="mb-3">Prix et Stock</h6>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Product.PurchasePrice" class="form-label">Prix d'achat *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">FCFA</span>
+                                    <input asp-for="Product.PurchasePrice" class="form-control" type="number" step="0.01" min="0" />
+                                </div>
+                                <span asp-validation-for="Product.PurchasePrice" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Product.SalePrice" class="form-label">Prix de vente *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">FCFA</span>
+                                    <input asp-for="Product.SalePrice" class="form-control" type="number" step="0.01" min="0" />
+                                </div>
+                                <span asp-validation-for="Product.SalePrice" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Product.TaxRate" class="form-label">Taux de TVA (%)</label>
+                                <div class="input-group">
+                                    <input asp-for="Product.TaxRate" class="form-control" type="number" step="0.01" min="0" max="100" value="0" />
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <span asp-validation-for="Product.TaxRate" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Product.MinStockLevel" class="form-label">Stock minimum</label>
+                                <input asp-for="Product.MinStockLevel" class="form-control" type="number" min="0" value="0" />
+                                <span asp-validation-for="Product.MinStockLevel" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Product.MaxStockLevel" class="form-label">Stock maximum</label>
+                                <input asp-for="Product.MaxStockLevel" class="form-control" type="number" min="0" value="1000" />
+                                <span asp-validation-for="Product.MaxStockLevel" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="InitialStock" class="form-label">Stock initial</label>
+                                <input asp-for="InitialStock" class="form-control" type="number" min="0" value="0" />
+                                <span asp-validation-for="InitialStock" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="/Products" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Créer le produit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panneau d'aide -->
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-info-circle me-2"></i>Conseils
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Bonnes pratiques :</h6>
+                        <ul class="mb-0">
+                            <li>Utilisez des SKU uniques et cohérents</li>
+                            <li>Définissez un stock minimum pour les alertes</li>
+                            <li>Le code-barres facilite la vente rapide</li>
+                            <li>Les catégories aident à l'organisation</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Attention :</h6>
+                        <p class="mb-0">Le prix de vente doit être supérieur au prix d'achat pour assurer une marge bénéficiaire.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function() {
+            // Calcul automatique de la marge
+            $('#Product_PurchasePrice, #Product_SalePrice').on('input', function() {
+                var purchasePrice = parseFloat($('#Product_PurchasePrice').val()) || 0;
+                var salePrice = parseFloat($('#Product_SalePrice').val()) || 0;
+                
+                if (purchasePrice > 0 && salePrice > 0) {
+                    var margin = salePrice - purchasePrice;
+                    var marginPercent = (margin / purchasePrice) * 100;
+                    
+                    // Afficher la marge dans une alerte si nécessaire
+                    if (margin < 0) {
+                        $('.alert-warning').show();
+                    } else {
+                        $('.alert-warning').hide();
+                    }
+                }
+            });
+        });
+    </script>
+}

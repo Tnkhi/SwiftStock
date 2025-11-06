@@ -1,0 +1,440 @@
+@page
+@using SwiftStock.Models
+@model SwiftStock.Pages.Reports.IndexModel
+@{
+    ViewData["Title"] = "Rapports - SwiftStock";
+}
+
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-chart-bar text-primary me-2"></i>
+                        Rapports et Analyses
+                    </h1>
+                    <p class="text-muted mb-0">Analysez vos performances et exportez vos données</p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-success" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel me-2"></i>Exporter Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres de période -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Période d'Analyse</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="reportType" class="form-label">Type de rapport</label>
+                            <select id="reportType" class="form-select" onchange="updateReportType()">
+                                <option value="sales">Rapport des Ventes</option>
+                                <option value="stock">Rapport de Stock</option>
+                                <option value="performance">Rapport de Performance</option>
+                                <option value="products">Top Produits</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="dateFrom" class="form-label">Date de début</label>
+                            <input type="date" id="dateFrom" class="form-control" value="@DateTime.Today.AddDays(-30).ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="dateTo" class="form-label">Date de fin</label>
+                            <input type="date" id="dateTo" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-primary" onclick="generateReport()">
+                                    <i class="fas fa-chart-line me-1"></i>Générer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques générales -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Chiffre d'Affaires
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalRevenue">@Model.TotalRevenue.ToString("C")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Nombre de Ventes
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalSales">@Model.TotalSales</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Panier Moyen
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="averageSale">@Model.AverageSale.ToString("C")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Marge Brute
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="grossMargin">@Model.GrossMargin.ToString("C")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu du rapport -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        <span id="reportTitle">Rapport des Ventes</span>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Rapport des ventes -->
+                    <div id="salesReport" class="report-content">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6>Ventes par jour</h6>
+                                <canvas id="salesChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Ventes par mode de paiement</h6>
+                                <canvas id="paymentChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Nombre de ventes</th>
+                                        <th>Chiffre d'affaires</th>
+                                        <th>Panier moyen</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var dailySale in Model.DailySales)
+                                    {
+                                        <tr>
+                                            <td>@dailySale.Date.ToString("dd/MM/yyyy")</td>
+                                            <td>@dailySale.SalesCount</td>
+                                            <td>@dailySale.TotalAmount.ToString("C")</td>
+                                            <td>@dailySale.AverageAmount.ToString("C")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Rapport de stock -->
+                    <div id="stockReport" class="report-content" style="display: none;">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6>État du stock</h6>
+                                <canvas id="stockChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Produits en stock bas</h6>
+                                <div class="list-group">
+                                    @foreach (var product in Model.LowStockProducts)
+                                    {
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">@product.Name</h6>
+                                                <small class="text-muted">@product.SKU</small>
+                                            </div>
+                                            <span class="badge bg-danger">@product.CurrentStock</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Produit</th>
+                                        <th>SKU</th>
+                                        <th>Stock actuel</th>
+                                        <th>Stock minimum</th>
+                                        <th>Valeur du stock</th>
+                                        <th>Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var product in Model.Products)
+                                    {
+                                        <tr>
+                                            <td>@product.Name</td>
+                                            <td>@product.SKU</td>
+                                            <td>@product.CurrentStock</td>
+                                            <td>@product.MinStockLevel</td>
+                                            <td>@((product.CurrentStock * product.PurchasePrice).ToString("C"))</td>
+                                            <td>
+                                                @if (product.CurrentStock <= 0)
+                                                {
+                                                    <span class="badge bg-danger">Rupture</span>
+                                                }
+                                                else if (product.IsLowStock)
+                                                {
+                                                    <span class="badge bg-warning">Stock bas</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success">Normal</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Rapport de performance -->
+                    <div id="performanceReport" class="report-content" style="display: none;">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6>Performance par produit</h6>
+                                <canvas id="performanceChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Top produits par performance</h6>
+                                <div class="list-group">
+                                    @foreach (var product in Model.TopMarginProducts)
+                                    {
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">@product.Name</h6>
+                                                <small class="text-muted">Marge: @product.ProfitMargin.ToString("C")</small>
+                                            </div>
+                                            <span class="badge bg-success">@((product.ProfitMargin / product.PurchasePrice * 100).ToString("F1"))%</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top produits -->
+                    <div id="productsReport" class="report-content" style="display: none;">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <h6>Top produits par quantité vendue</h6>
+                                <canvas id="topProductsChart" width="400" height="200"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Top produits par chiffre d'affaires</h6>
+                                <canvas id="topRevenueChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let salesChart, paymentChart, stockChart, performanceChart, topProductsChart, topRevenueChart;
+
+        $(document).ready(function() {
+            initializeCharts();
+        });
+
+        function updateReportType() {
+            const reportType = $('#reportType').val();
+            
+            // Masquer tous les rapports
+            $('.report-content').hide();
+            
+            // Afficher le rapport sélectionné
+            $('#' + reportType + 'Report').show();
+            
+            // Mettre à jour le titre
+            const titles = {
+                'sales': 'Rapport des Ventes',
+                'stock': 'Rapport de Stock',
+                'performance': 'Rapport de Performance',
+                'products': 'Top Produits'
+            };
+            $('#reportTitle').text(titles[reportType]);
+        }
+
+        function generateReport() {
+            const reportType = $('#reportType').val();
+            const dateFrom = $('#dateFrom').val();
+            const dateTo = $('#dateTo').val();
+            
+            // TODO: Implémenter la génération de rapport via AJAX
+            console.log('Génération du rapport:', { reportType, dateFrom, dateTo });
+            
+            // Simuler la mise à jour des données
+            updateCharts();
+        }
+
+        function initializeCharts() {
+            // Graphique des ventes par jour
+            const salesCtx = document.getElementById('salesChart').getContext('2d');
+            salesChart = new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: @Html.Raw(Json.Serialize(Model.DailySales.Select(d => d.Date.ToString("dd/MM")))),
+                    datasets: [{
+                        label: 'Chiffre d\'affaires',
+                        data: @Html.Raw(Json.Serialize(Model.DailySales.Select(d => d.TotalAmount))),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Graphique des modes de paiement
+            const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+            paymentChart = new Chart(paymentCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Espèces', 'Carte', 'Mobile Money'],
+                    datasets: [{
+                        data: [60, 30, 10],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 205, 86, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+
+            // Graphique de l'état du stock
+            const stockCtx = document.getElementById('stockChart').getContext('2d');
+            stockChart = new Chart(stockCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Stock normal', 'Stock bas', 'Rupture'],
+                    datasets: [{
+                        label: 'Nombre de produits',
+                        data: [@Model.Products.Count(p => !p.IsLowStock && p.CurrentStock > 0), @Model.LowStockProducts.Count(), @Model.Products.Count(p => p.CurrentStock <= 0)],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.8)',
+                            'rgba(255, 205, 86, 0.8)',
+                            'rgba(255, 99, 132, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            // Mettre à jour les graphiques avec les nouvelles données
+            if (salesChart) {
+                salesChart.update();
+            }
+            if (paymentChart) {
+                paymentChart.update();
+            }
+            if (stockChart) {
+                stockChart.update();
+            }
+            if (performanceChart) {
+                performanceChart.update();
+            }
+        }
+
+        function exportToExcel() {
+            const reportType = $('#reportType').val();
+            const dateFrom = $('#dateFrom').val();
+            const dateTo = $('#dateTo').val();
+            
+            // TODO: Implémenter l'export Excel
+            alert('Export Excel pour le rapport ' + reportType + ' du ' + dateFrom + ' au ' + dateTo);
+        }
+    </script>
+}

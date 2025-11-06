@@ -1,0 +1,176 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SwiftStock</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/SwiftStock.styles.css" asp-append-version="true" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" asp-area="" asp-page="/Index">
+                    <i class="fas fa-store me-2"></i>SwiftStock
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-page="/Index">
+                                <i class="fas fa-tachometer-alt me-1"></i>Tableau de Bord
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="productsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-boxes me-1"></i>Produits
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="productsDropdown">
+                                <li><a class="dropdown-item" href="/Products">
+                                    <i class="fas fa-list me-2"></i>Liste des produits
+                                </a></li>
+                                <li><a class="dropdown-item" asp-page="/Products/Categories/Index">
+                                    <i class="fas fa-tags me-2"></i>Catégories
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#">
+                                    <i class="fas fa-plus me-2"></i>Nouveau produit
+                                </a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="posDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cash-register me-1"></i>Point de Vente
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="posDropdown">
+                                <li><a class="dropdown-item" href="/POS">
+                                    <i class="fas fa-cash-register me-2"></i>Terminal POS
+                                </a></li>
+                                <li><a class="dropdown-item" asp-page="/POS/Promotions/Index">
+                                    <i class="fas fa-percentage me-2"></i>Promotions
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#">
+                                    <i class="fas fa-users me-2"></i>Clients
+                                </a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/Sales">
+                                <i class="fas fa-shopping-cart me-1"></i>Ventes
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="purchasesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-shopping-cart me-1"></i>Achats
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="purchasesDropdown">
+                                <li><a class="dropdown-item" href="#">
+                                    <i class="fas fa-file-invoice me-2"></i>Bons de commande
+                                </a></li>
+                                <li><a class="dropdown-item" href="#">
+                                    <i class="fas fa-truck me-2"></i>Réceptions
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#">
+                                    <i class="fas fa-building me-2"></i>Fournisseurs
+                                </a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-chart-bar me-1"></i>Rapports
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
+                                <li><a class="dropdown-item" href="/Reports">
+                                    <i class="fas fa-chart-line me-2"></i>Tableau de bord
+                                </a></li>
+                                <li><a class="dropdown-item" href="/Reports/Sales">
+                                    <i class="fas fa-chart-pie me-2"></i>Rapport de ventes
+                                </a></li>
+                                <li><a class="dropdown-item" href="/Reports/Stock">
+                                    <i class="fas fa-boxes me-2"></i>Rapport de stock
+                                </a></li>
+                                <li><a class="dropdown-item" href="/Reports/Performance">
+                                    <i class="fas fa-trophy me-2"></i>Rapport de performance
+                                </a></li>
+                            </ul>
+                        </li>
+                        @if (User.IsInRole("Admin") || User.IsInRole("Manager"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-cog me-1"></i>Administration
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                    <li><a class="dropdown-item" asp-page="/Admin/Users/Index">
+                                        <i class="fas fa-users me-2"></i>Utilisateurs
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#">
+                                        <i class="fas fa-map-marker-alt me-2"></i>Emplacements
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#">
+                                        <i class="fas fa-cogs me-2"></i>Paramètres
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#">
+                                        <i class="fas fa-history me-2"></i>Logs d'audit
+                                    </a></li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                    <ul class="navbar-nav">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user me-1"></i>@User.Identity.Name
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/Account/Manage"><i class="fas fa-cog me-2"></i>Paramètres</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/Account/Logout"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="/Account/Login">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Connexion
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container-fluid">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2025 - SwiftStock - <a asp-area="" asp-page="/Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

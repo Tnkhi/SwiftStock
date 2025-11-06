@@ -1,0 +1,27 @@
+@page
+@model SwiftStock.Pages.Account.LogoutModel
+@{
+    ViewData["Title"] = "Déconnexion";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h2>Déconnexion</h2>
+                    <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+                    
+                    <form method="post">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-sign-out-alt me-2"></i>Se déconnecter
+                        </button>
+                        <a href="javascript:history.back()" class="btn btn-secondary ms-2">
+                            <i class="fas fa-arrow-left me-2"></i>Annuler
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,232 @@
+@page
+@model SwiftStock.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = "Gestion des Utilisateurs";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-users"></i> Gestion des Utilisateurs</h2>
+                <a asp-page="Create" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nouvel Utilisateur
+                </a>
+            </div>
+
+            <!-- Filtres et recherche -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="searchTerm" class="form-label">Rechercher</label>
+                            <input type="text" class="form-control" id="searchTerm" name="searchTerm" 
+                                   value="@Model.SearchTerm" placeholder="Nom, email...">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="roleFilter" class="form-label">Rôle</label>
+                            <select class="form-select" id="roleFilter" name="roleFilter">
+                                <option value="">Tous les rôles</option>
+                                <option value="Admin" selected="@(Model.RoleFilter == "Admin")">Admin</option>
+                                <option value="Manager" selected="@(Model.RoleFilter == "Manager")">Manager</option>
+                                <option value="Cashier" selected="@(Model.RoleFilter == "Cashier")">Caissier</option>
+                                <option value="StockManager" selected="@(Model.RoleFilter == "StockManager")">Gestionnaire Stock</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="statusFilter" class="form-label">Statut</label>
+                            <select class="form-select" id="statusFilter" name="statusFilter">
+                                <option value="">Tous</option>
+                                <option value="true" selected="@(Model.StatusFilter == "true")">Actif</option>
+                                <option value="false" selected="@(Model.StatusFilter == "false")">Inactif</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-search"></i> Filtrer
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tableau des utilisateurs -->
+            <div class="card">
+                <div class="card-body">
+                    @if (Model.Users.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Nom complet</th>
+                                        <th>Email</th>
+                                        <th>Rôle</th>
+                                        <th>Dernière connexion</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in Model.Users)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                        @user.FirstName.Substring(0, 1).ToUpper()@user.LastName.Substring(0, 1).ToUpper()
+                                                    </div>
+                                                    <div>
+                                                        <strong>@user.FirstName @user.LastName</strong>
+                                                        @if (user.MustChangePassword)
+                                                        {
+                                                            <span class="badge bg-warning ms-1">Changer mot de passe</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@user.Email</td>
+                                            <td>
+                                                <span class="badge bg-@(user.Role switch {
+                                                    "Admin" => "danger",
+                                                    "Manager" => "warning", 
+                                                    "Cashier" => "info",
+                                                    "StockManager" => "success",
+                                                    _ => "secondary"
+                                                })">
+                                                    @user.Role
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (user.LastLoginAt.HasValue)
+                                                {
+                                                    <span title="@user.LastLoginAt.Value.ToString("dd/MM/yyyy HH:mm")">
+                                                        @user.LastLoginAt.Value.ToString("dd/MM/yyyy")
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Jamais</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (user.IsActive)
+                                                {
+                                                    <span class="badge bg-success">Actif</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger">Inactif</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a asp-page="Details" asp-route-id="@user.Id" class="btn btn-sm btn-outline-info" title="Voir détails">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a asp-page="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-outline-warning" title="Modifier">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    @if (user.IsActive)
+                                                    {
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                                onclick="toggleUserStatus('@user.Id', false)" title="Désactiver">
+                                                            <i class="fas fa-user-slash"></i>
+                                                        </button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button type="button" class="btn btn-sm btn-outline-success" 
+                                                                onclick="toggleUserStatus('@user.Id', true)" title="Activer">
+                                                            <i class="fas fa-user-check"></i>
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        @if (Model.TotalPages > 1)
+                        {
+                            <nav aria-label="Pagination des utilisateurs">
+                                <ul class="pagination justify-content-center">
+                                    @if (Model.CurrentPage > 1)
+                                    {
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=@(Model.CurrentPage - 1)&searchTerm=@Model.SearchTerm&roleFilter=@Model.RoleFilter&statusFilter=@Model.StatusFilter">Précédent</a>
+                                        </li>
+                                    }
+
+                                    @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+                                    {
+                                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                            <a class="page-link" href="?page=@i&searchTerm=@Model.SearchTerm&roleFilter=@Model.RoleFilter&statusFilter=@Model.StatusFilter">@i</a>
+                                        </li>
+                                    }
+
+                                    @if (Model.CurrentPage < Model.TotalPages)
+                                    {
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=@(Model.CurrentPage + 1)&searchTerm=@Model.SearchTerm&roleFilter=@Model.RoleFilter&statusFilter=@Model.StatusFilter">Suivant</a>
+                                        </li>
+                                    }
+                                </ul>
+                            </nav>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucun utilisateur trouvé</h5>
+                            <p class="text-muted">Aucun utilisateur ne correspond aux critères de recherche.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleUserStatus(userId, isActive) {
+            const action = isActive ? 'activer' : 'désactiver';
+            if (confirm(`Êtes-vous sûr de vouloir ${action} cet utilisateur ?`)) {
+                fetch(`/Admin/Users/ToggleStatus/${userId}?isActive=${isActive}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('Erreur lors de la modification du statut');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erreur lors de la modification du statut');
+                });
+            }
+        }
+    </script>
+}
+
+<style>
+    .avatar-sm {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+</style>
+
